@@ -274,7 +274,22 @@ function app_main() {
             },
             postProcessDefinition : function() {
 				return postProcessDefinition(this.container.openapi);
-			}
+			},
+            generate: function (module, name) {
+                var data = new FormData();
+                data.append('module', module);
+                data.append('name', name);
+                data.append('schema',JSON.stringify(this.container.openapi));
+                $.ajax({
+                    url:'/generate',
+                    type:"POST",
+                    contentType: false,
+                    processData: false,
+                    data:data,
+                    success: function(result) {
+                    }
+                });
+            }
         }
     });
 	$(document).ajaxError(function(e, jqxhr, settings, thrownError){

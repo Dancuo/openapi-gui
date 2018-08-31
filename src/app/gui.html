@@ -1,7 +1,8 @@
-<div class='component-gui'>
+<div class='component-gui' xmlns:v-on="http://www.w3.org/1999/xhtml" xmlns:v-bind="http://www.w3.org/1999/xhtml"
+     xmlns="http://www.w3.org/1999/html">
 	<div class='navbar is-fixed-top has-shadow success' id='topnav'>
 		<div class="navbar-brand">
-			<span class='navbar-item'><a href="https://github.com/mermade/openapi-gui">OpenAPI-GUI v3</a></span>
+			<span class='navbar-item'><a href="https://github.com/mermade/openapi-gui">Sweetome Restful API Management</a></span>
             <button class="button navbar-burger">
                 <span>Mobile menu A</span>
                 <span>Mobile menu B</span>
@@ -14,9 +15,6 @@
 				<a class="btn" v-on:click="settings()"><i class='fa fa-white fa-cog'></i> Settings</a>
 				<a class="btn" v-on:click="save()"><i class='fa fa-white fa-save'></i> Save</a>
 				<a class="btn" v-on:click="undo()"><i class='fa fa-white fa-undo'></i> Undo</a>
-				<a class="btn" target="_blank" href="https://twitter.com/share?source=tweetbutton&text=OpenAPI-GUI%20Visual%20editor%20for%20%23OpenAPI%203.0.x%20Via%20%40PermittedSoc&url=https%3A%2F%2Fgithub.com%2FMermade%2Fopenapi-gui"><i class='fa fa-white fa-twitter'></i></a>
-				<a class="btn" target="_blank" href="https://twitter.com/intent/follow?screen_name=PermittedSoc"><i class='fa fa-twitter'></i> Follow</a>
-				<a class='btn' target="_blank" href="https://github.com/mermade/openapi-gui"><i class='fa fa-github'></i> GitHub</a>
 			</div>
 		</div>
 	</div>
@@ -720,72 +718,20 @@
 					<h1 class="title">Wizards (Work-In-Progress)</h1>
 					<h2 class="subtitle">These functions may be experimental, or have only a rudimentary UI</h2>
 					<ul>
-						<li><a id="aValidate">Validate definition</a> using <span v-if="!window.intelligentBackend"><a href="https://mermade.org.uk/openapi-converter">OpenAPI-converter</a> (online version of <a href="https://github.com/mermade/swagger2openapi">swagger2openapi</a>)</span><span v-if="window.intelligentBackend">built-in validator</span></li>
-						<li><a id="aShinola">Generate documentation</a> using <a href="https://github.com/mermade/shinola">shinola</a> (online <a href="https://github.com/mermade/widdershins">widdershins</a> and <a href="https://github.com/mermade/shins">shins</a> pipeline)</li>
-						<li v-if="window.intelligentBackend"><a id="aShins" href="/shins">Preview documentation</a> using <a href="https://github.com/mermade/widdershins">widdershins</a> and <a href="https://github.com/mermade/shins">shins</a> </li>
-						<li v-if="window.intelligentBackend"><a id="aWiddershins" href="/markdown">Dump markdown</a> using <a href="https://github.com/mermade/widdershins">widdershins</a> </li>
-
-						<li><a id="aCRUD">Create CRUD operations</a> from definition</li>
-						<li><a id="aImportSchema">Import schema</a></li>
-						<li>Create server SDK - {{cgData.servers.length}} languages - <a href="https://github.com/swagger-api/swagger-codegen/issues/4669">waiting for swagger-codegen</a></li>
-						<li>Create client SDK - {{cgData.clients.length}} languages - <strong>ditto</strong></li>
-						<li v-if="window.intelligentBackend">Serve <a href="/serve">definition</a> for external use</li>
-						<li>OpenAPI <a href="vis/wordcloud.html" target="_blank">WordCloud</a> visualisation</li>
-						<li>OpenAPI <a href="vis/tree.html" target="_blank">Tree</a> visualisation</li>
-						<li>Generate link definition from sample</li>
-					</ul>
-					<br/>
-					<br/>
-
-					<textarea id="txtValidation" class="hidden wizDetails textarea">
-					</textarea>
-
-					<div id="divImportSchema" class="hidden wizDetails">
-						<textarea id="txtSchema" class="textarea" placeholder="Schema (JSON or YAML)">
-						</textarea>
-						<br/>
-						<div class='field is-horizontal'>
-							<label class='field-label is-normal label'> Schema Name </label>
-							<div class='field-body field control'>
-								<input id="txtSchemaName" class="input" placeholder="Required">
-							</div>
-						</div>
-						<div id="btnImportSchema" class="button is-primary">Update</div>
-					</div>
-
-					<div id="divCRUD" class="hidden wizDetails box">
-						<div class='level'>
-						<div class='field is-horizontal level-left'>
-							<label class='field-label is-normal label' for="selCRUDSchema"> Schema </label>
-							<div class='field-body'>
-								<div class="select">
-									<select name="selCRUDSchema">
-										<option v-for="(schema,key) in openapi.components.schemas" :value="key">{{key}}</option>
-									</select>
-								</div>
-							</div>
-						</div>
-						<div class='field is-horizontal level-item'>
-							<label class='field-label is-normal label' for="selCRUDMethods"> Methods </label>
-							<div class='field-body'>
-								<div class="select" >
-									<select name="selCRUDMethods" multiple=true>
-										<option value="get" selected>GET</option>
-										<option value="post">POST</option>
-										<option value="put">PUT</option>
-										<option value="patch">PATCH</option>
-										<option value="delete">DELETE</option>
-										<option value="head">HEAD</option>
-										<option value="options">OPTIONS</option>
-										<option value="trace">TRACE</option>
-									</select>
-								</div>
-							</div>
-						</div>
-						<div class="button is-primary">Generate</div>
-						</div>
-					</div>
-
+                        <form name="formGenerate">
+                            Module:
+                            <select id="module">
+                                <option value="global" selected>Global</option>
+                                <option value="framework">Framework</option>
+                                <option value="core">Core</option>
+                                <option value="vrms">VRMS</option>
+                                <option value="crs">CRS</option>
+                                <option value="inventory">Inventory</option>
+                            </select>
+                            Name: <input type="text" id="name" required="required" value="default"/>
+                            <a v-on:click="generate()">Generate</a>
+                        </form>
+                    </ul>
 				</div>
 			</div>
 

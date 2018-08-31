@@ -334,6 +334,12 @@ Vue.component('gui-main', {
 			this.$root.save();
 		},
 
+        generate: function () {
+		    var module = document.getElementById("module").value;
+            var name = document.getElementById("name").value;
+		    this.$root.generate(module, name);
+        },
+
 		undo: function() {
 			if (window.localStorage) {
 				Vue.set(this.$root.container, 'openapi', JSON.parse(window.localStorage.getItem('openapi3')));

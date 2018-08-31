@@ -1,7 +1,7 @@
 {
-    "name": "openapi-gui",
-    "version": "1.2.1",
-    "description": "GUI / visual editor for creating and editing OpenApi / Swagger definitions",
+    "name": "swdapi",
+    "version": "1.0.0",
+    "description": "Sweetome Restful API Management based on Swagger OpenAPI Specification",
     "main": "openapi-gui.js",
     "bin": {
         "openapi-gui": "./openapi-gui.js"
@@ -12,7 +12,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Mermade/openapi-gui.git"
+        "url": "git+https://github.com/Dancuo/openapi-gui.git"
     },
     "keywords": [
         "openapi",
@@ -22,17 +22,22 @@
         "gui",
         "visual"
     ],
-    "author": "Mike Ralphson",
+    "author": "Dancuo Wang",
+    "contributors": [
+        "Dancuo Wang <dancuownag@gmail.com>"
+    ],
     "license": "MIT",
     "optionalDependencies": {
-        "express": "^4.15.5",
         "compression": "^1.6.2",
         "ejs": "^2.5.1",
-        "widdershins": "^3.4.2",
-        "shins": "^2.2.1-5"
+        "express": "^4.16.3",
+        "shins": "^2.2.1-5",
+        "widdershins": "^3.4.2"
     },
     "dependencies": {
+        "express-fileupload": "^0.4.0",
         "js-yaml": "^3.10.0",
+        "mkdirp": "^0.5.1",
         "openapi-webconverter": "^1.3.10",
         "opn": "^5.2.0",
         "tiny-opts-parser": "0.0.3"
