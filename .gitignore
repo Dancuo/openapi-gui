@@ -187,3 +187,4 @@ fabric.properties
 # Editor-based Rest Client
 
 /schema/
+/api_docs/

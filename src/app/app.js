@@ -209,6 +209,21 @@ function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 
+var settings;
+
+if (window.localStorage) {
+    var o = window.localStorage.getItem('settings');
+    if (o) {
+        try {
+            settings = JSON.parse(o);
+        }
+        catch (ex) {}
+    }
+}
+if(typeof settings === 'undefined') {
+    settings = clone(defaultSettings);
+}
+
 var openapi;
 
 if (window.localStorage) {
@@ -233,6 +248,23 @@ importschema.text = JSON.stringify(openapi, null, 2);
 var schemaEditorSave = function() {};
 var schemaEditorClose = function() {};
 
+function save_settings(module, name) {
+    settings.module = module;
+    settings.name = name;
+    if(window.localStorage) {
+        window.localStorage.setItem('settings', JSON.stringify(settings));
+    }
+}
+
+function showAlert(text, callback) {
+    $('#alertText').text(text);
+    $('#alert').addClass('is-active');
+    $('#alertClose').click(function(){
+        if (callback) callback(false);
+        $('#alert').removeClass('is-active');
+    });
+}
+
 function app_main() {
     Vue.use(Buefy, { defaultIconPack: 'fa' });
     Vue.component(Buefy.default.Input.name, Buefy.default.Input);
@@ -245,6 +277,7 @@ function app_main() {
             container: {
                 openapi: openapi
             },
+            settings: settings,
             importschema : importschema,
 			specVersion: 'master'
         },
@@ -276,9 +309,11 @@ function app_main() {
 				return postProcessDefinition(this.container.openapi);
 			},
             generate: function (module, name) {
+			    save_settings(module, name);
                 var data = new FormData();
                 data.append('module', module);
                 data.append('name', name);
+                data.append('version', this.container.openapi.info.version);
                 data.append('schema',JSON.stringify(this.container.openapi));
                 $.ajax({
                     url:'/generate',
@@ -287,6 +322,10 @@ function app_main() {
                     processData: false,
                     data:data,
                     success: function(result) {
+                        showAlert('Generate successful!');
+                    },
+                    error: function(error){
+                        showAlert('Generate error: ' + error);
                     }
                 });
             }

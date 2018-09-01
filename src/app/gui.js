@@ -326,18 +326,14 @@ Vue.component('gui-main', {
             window.scrollTo(0,0);
 		},
 
-        settings: function() {
-            // TODO
-        },
-
 		save: function() {
 			this.$root.save();
 		},
 
         generate: function () {
-		    var module = document.getElementById("module").value;
-            var name = document.getElementById("name").value;
-		    this.$root.generate(module, name);
+            let module = document.getElementById("module").value;
+            let name = document.getElementById("name").value;
+            this.$root.generate(module, name);
         },
 
 		undo: function() {

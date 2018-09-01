@@ -12,7 +12,6 @@
 		<div class="navbar-end">
 			<div class='navbar-item'>
 				<a class="btn" v-on:click="scrollTop()"><i class='fa fa-white fa-arrow-up'></i> Top</a>
-				<a class="btn" v-on:click="settings()"><i class='fa fa-white fa-cog'></i> Settings</a>
 				<a class="btn" v-on:click="save()"><i class='fa fa-white fa-save'></i> Save</a>
 				<a class="btn" v-on:click="undo()"><i class='fa fa-white fa-undo'></i> Undo</a>
 			</div>
@@ -71,12 +70,12 @@
 
 			<a id='scrollTop'></a>
 			<ul id="section-tabs" class='tabs is-boxed tab-container'>
-				<li class="tabItem" id="tabItem-about">
-					<a class="tabSelect" href="#about" v-on:click="selectTab('about',$event)">
-						<span class="icon is-small"><i class="fa fa-info"></i></span>
-						<span>About</span>
-					</a>
-				</li>
+                <li class="tabItem" id="tabItem-wizards">
+                    <a class="tabSelect" href='#wizards' id="wizards-tab" v-on:click="selectTab('wizards',$event)">
+                        <span class="icon is-small"><i class='fa fa-magic'></i></span>
+                        <span>Wizards</span>
+                    </a>
+                </li>
 				<li class="tabItem" id="tabItem-input" v-on:click="selectTab('input',$event)">
 					<a class="tabSelect" href='#input' id="input-tab">
 						<span class="icon is-small"><i class='fa fa-upload'></i></span>
@@ -119,12 +118,6 @@
 						<span>Schemas</span>
 					</a>
 				</li>
-				<li class="tabItem" id="tabItem-wizards">
-					<a class="tabSelect" href='#wizards' id="wizards-tab" v-on:click="selectTab('wizards',$event)">
-						<span class="icon is-small"><i class='fa fa-magic'></i></span>
-						<span>Wizards</span>
-					</a>
-				</li>
 				<li class="tabItem" id="tabItem-output">
 					<a class="tabSelect" href='#output' id="output-tab" v-on:click="renderOutput($event)">
 						<span class="icon is-small"><i class='fa fa-file'></i></span>
@@ -137,6 +130,12 @@
 						<span>Export YAML</span>
 					</a>
 				</li>
+                <li class="tabItem" id="tabItem-about">
+                    <a class="tabSelect" href="#about" v-on:click="selectTab('about',$event)">
+                        <span class="icon is-small"><i class="fa fa-info"></i></span>
+                        <span>About</span>
+                    </a>
+                </li>
 			</ul>
 
 			<div class='tab-content'>
@@ -717,18 +716,25 @@
 				<div class="tab-pane hidden container is-fluid" id="wizards">
 					<h1 class="title">Wizards (Work-In-Progress)</h1>
 					<h2 class="subtitle">These functions may be experimental, or have only a rudimentary UI</h2>
-					<ul>
-                        <form name="formGenerate">
+                    <ul>
+                        <form name="formModule">
                             Module:
-                            <select id="module">
-                                <option value="global" selected>Global</option>
+                            <select id="module" v-model="this.$root.settings.module">
+                                <option value="global">Global</option>
                                 <option value="framework">Framework</option>
                                 <option value="core">Core</option>
                                 <option value="vrms">VRMS</option>
                                 <option value="crs">CRS</option>
                                 <option value="inventory">Inventory</option>
                             </select>
-                            Name: <input type="text" id="name" required="required" value="default"/>
+                        </form>
+                        <form name="formSchemaList">
+
+                        </form>
+                    </ul>
+					<ul>
+                        <form name="formGenerate">
+                            Name: <input type="text" id="name" required="required" v-model="this.$root.settings.name">
                             <a v-on:click="generate()">Generate</a>
                         </form>
                     </ul>

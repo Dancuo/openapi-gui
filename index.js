@@ -1,7 +1,15 @@
 'use strict';
 
+const {exec} = require('child_process');
 const fs = require('fs');
 const util = require('util');
+const path = require('path');
+const log4js = require('log4js');
+log4js.configure({
+    appenders: { swdapi: { type: 'file', filename: 'logs/swdapi.log' } },
+    categories: { default: { appenders: ['swdapi'], level: 'info' } }
+});
+const logger = log4js.getLogger('swdapi');
 
 const express = require('express');
 const compression = require('compression');
@@ -10,18 +18,23 @@ const yaml = require('js-yaml');
 const widdershins = require('widdershins');
 const shins = require('shins');
 const mkdirp = require('mkdirp');
+const glob = require("glob");
 
 const ourVersion = require('./package.json').version;
 const petstore = require('./data/static.js').petstore;
-const folder = 'schema';
-const defName = 'default.json';
+const schemaFolder = 'schema';
+const docFolder = 'api_docs';
 const defModule = 'global';
+const defVersion = '1.0';
+const schemaExt = '.yml';
+const docExt = '.html';
 
+let defName = 'default.json';
 let definition = petstore;
 let writeBack = false;
 
 // nice stack traces
-process.on('unhandledRejection', r => console.log(r));
+process.on('unhandledRejection', r => logger.error(r));
 
 let api = require('openapi-webconverter/api.js').api;
 let app = api.app;
@@ -46,7 +59,7 @@ app.post('/store', upload.single('filename'), function (req, res) {
         }
     }
     catch (ex) {
-        console.warn(ex.message);
+        logger.warn(ex.message);
     }
     res.send('OK');
 });
@@ -58,32 +71,55 @@ app.post('/generate', upload.single('filename'), function (req, res) {
         definition = JSON.parse(req.body.schema);
         let module = req.body.module;
         let name = req.body.name;
+        let version = req.body.version;
         if (name == null) {
             name = defName;
         }
-
         if (module == null) {
             module = defModule;
         }
+        if (version == null) {
+            version = defVersion;
+        }
 
-        module = folder + '/' + module;
+        let moduleFolder = schemaFolder + path.sep + module;
         // Prepare module directory
-        mkdirp(module, function(err) {
-            if(err != null) {
-                console.error("Failed to create create folder: " + module + " because : " + err);
+        mkdirp(moduleFolder, function (err) {
+            if (err) {
+                logger.error("Failed to create folder because: " + moduleFolder + " because : " + err.stack);
+                res.send(err);
                 return;
             }
 
-            name = module + '/' + name + '.json';
-
-            console.log('Schema name: ', name);
+            let schemaFile = moduleFolder + path.sep + nameWithVeriosn(name, version) + schemaExt;
 
             // Write schema file
-            let s = JSON.stringify(definition, null, 2);
-            fs.writeFile(name, s, 'utf8', function (err) {
-                if(err != null) {
-                    console.error('Failed to write file: ' + err.stack);
+            let s = yaml.safeDump(definition, {lineWidth: -1});
+            backupFile(schemaFile);
+            fs.writeFile(schemaFile, s, 'utf8', function (err) {
+                if (err) {
+                    logger.error('Failed to write file because: ' + err.stack);
+                    res.send(err);
+                    return;
                 }
+
+                logger.info('Saved schema file: ', schemaFile);
+
+                generateApiDoc(module, name, version, schemaFile, function (err) {
+                    if(err) {
+                        logger.error('Failed to generate api document because: ' + err.stack);
+                        res.send(err);
+                        return;
+                    }
+
+                    listFiles(module, true, function (err, files) {
+                        if(err) {
+                            logger.warn(err.stack);
+                            return;
+                        }
+                        logger.info('Schemas: ' + files);
+                    });
+                });
             });
 
         });
@@ -91,7 +127,8 @@ app.post('/generate', upload.single('filename'), function (req, res) {
 
     }
     catch (ex) {
-        console.warn(ex.message);
+        logger.warn(ex.message);
+        res.send(ex.message);
     }
     res.send('OK');
 });
@@ -164,10 +201,78 @@ function server(myport, argv) {
                 console.log('Serving', defName);
                 definition = yaml.safeLoad(fs.readFileSync(defName, 'utf8'), {json: true});
             }
-            console.log('Launching...');
+            logger.info('Launching...');
             opn('http://' + (host === '::' ? 'localhost' : host) + ':' + port + path);
         }
     });
+}
+
+function generateApiDoc(module, name, version, schemaFile, callback) {
+
+    let moduleFolder = docFolder + path.sep + module;
+
+    // Prepare module directory
+    mkdirp(moduleFolder, function (err) {
+
+        if (err) {
+            callback(err);
+            return err;
+        }
+
+        let docFile = moduleFolder + path.sep + nameWithVeriosn(name, version) + docExt;
+        backupFile(docFile);
+
+        let generateCommand = 'api2html -o ' + docFile + ' ' + schemaFile;
+        exec(generateCommand, (error, stdout, stderr) => {
+            if (error) {
+                callback(error);
+            }
+
+            logger.info('Generated ApiDoc: ', docFile);
+
+            callback();
+        });
+    });
+}
+
+function backupFile(file) {
+
+    if(!fs.existsSync(file)) {
+        return;
+    }
+
+    let ext = path.extname(file);
+    let dirname = path.dirname(file);
+    let backupFolder = dirname + path.sep + 'backup';
+
+    mkdirp(backupFolder, function (err) {
+
+        if (err) {
+            logger.error('Backup file failed: ' + err.stack);
+            return;
+        }
+
+        let dateFormat = require('dateformat');
+        let now = new Date();
+        let timestamp = dateFormat(now, 'yyyymmddhhMMss');
+        let backupFile = backupFolder + path.sep + path.basename(file, ext) + '-' + timestamp + ext;
+        fs.copyFileSync(file, backupFile);
+        logger.info('Backup file: ' + file + ' to ' + backupFile)
+    });
+}
+
+function listFiles(module, isSchema, callback) {
+
+    let folder = (isSchema ? schemaFolder : docFolder) + path.sep + module;
+    let searchString = folder + path.sep + '*' + (isSchema ? schemaExt : docExt);
+
+    glob(searchString, function (err, files) {
+        callback(err, files);
+    })
+}
+
+function nameWithVeriosn(name, version) {
+    return name + '_' + version.replace('.', '-');
 }
 
 module.exports = {
