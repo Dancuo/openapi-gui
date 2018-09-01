@@ -1,3 +1,4 @@
+
 function clone(obj) {
     try {
       return JSON.parse(JSON.stringify(obj));
@@ -210,7 +211,6 @@ function onlyUnique(value, index, self) {
 }
 
 var settings;
-
 if (window.localStorage) {
     var o = window.localStorage.getItem('settings');
     if (o) {
@@ -225,7 +225,6 @@ if(typeof settings === 'undefined') {
 }
 
 var openapi;
-
 if (window.localStorage) {
     var o = window.localStorage.getItem('openapi3');
     if (o) {
@@ -241,6 +240,21 @@ if (typeof openapi === 'undefined') {
 
 openapi = preProcessDefinition(openapi);
 
+var swdschemas;
+if(window.localStorage) {
+    var o = window.localStorage.getItem('swdschemas');
+    if (o) {
+        try {
+            swdschemas = JSON.parse(o);
+        }
+        catch (ex) {}
+    }
+}
+
+if (typeof swdschemas === 'undefined') {
+    swdschemas = load_swdschemas();
+}
+
 var importschema = {};
 importschema.text = JSON.stringify(openapi, null, 2);
 
@@ -248,21 +262,34 @@ importschema.text = JSON.stringify(openapi, null, 2);
 var schemaEditorSave = function() {};
 var schemaEditorClose = function() {};
 
+function load_swdschemas() {
+    let data = new FormData();
+    data.append('module', settings.module);
+    $.ajax({
+        url:'/swdschemas',
+        type:"POST",
+        contentType: false,
+        processData: false,
+        data:data,
+        success: function(result) {
+            swdschemas = result;
+            if(window.localStorage) {
+                window.localStorage.setItem('swdschemas', JSON.stringify(swdschemas));
+            }
+
+        },
+        error: function(error){
+
+        }
+    });
+}
+
 function save_settings(module, name) {
     settings.module = module;
     settings.name = name;
     if(window.localStorage) {
         window.localStorage.setItem('settings', JSON.stringify(settings));
     }
-}
-
-function showAlert(text, callback) {
-    $('#alertText').text(text);
-    $('#alert').addClass('is-active');
-    $('#alertClose').click(function(){
-        if (callback) callback(false);
-        $('#alert').removeClass('is-active');
-    });
 }
 
 function app_main() {
@@ -278,6 +305,7 @@ function app_main() {
                 openapi: openapi
             },
             settings: settings,
+            swdchemas: swdschemas,
             importschema : importschema,
 			specVersion: 'master'
         },
@@ -322,10 +350,10 @@ function app_main() {
                     processData: false,
                     data:data,
                     success: function(result) {
-                        showAlert('Generate successful!');
+                        alert('Generate successful!');
                     },
                     error: function(error){
-                        showAlert('Generate error: ' + error);
+                        alert('Generate error: ' + error);
                     }
                 });
             }

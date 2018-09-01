@@ -7,7 +7,7 @@ const path = require('path');
 const log4js = require('log4js');
 log4js.configure({
     appenders: { swdapi: { type: 'file', filename: 'logs/swdapi.log' } },
-    categories: { default: { appenders: ['swdapi'], level: 'info' } }
+    categories: { default: { appenders: ['swdapi'], level: 'debug' } }
 });
 const logger = log4js.getLogger('swdapi');
 
@@ -28,6 +28,7 @@ const defModule = 'global';
 const defVersion = '1.0';
 const schemaExt = '.yml';
 const docExt = '.html';
+const logo = 'source/images/logo.png';
 
 let defName = 'default.json';
 let definition = petstore;
@@ -64,7 +65,39 @@ app.post('/store', upload.single('filename'), function (req, res) {
     res.send('OK');
 });
 
-// extract into URSA: Undo/Redo Server API, use API-chaining
+// List schemas for spec module
+app.post('/swdschemas', upload.single('filename'), function (req, res) {
+    try {
+
+        logger.debug("swdschemas req.body", JSON.stringify(req.body));
+
+        let module = req.body.module;
+        listFiles(module, true, function (err, files) {
+            if(err) {
+                logger.warn(err.stack);
+                return;
+            }
+
+            var swdschemas = [];
+
+            files.forEach((file) => {
+                let swdchema = schemaFromFileName(path.basename(file, schemaExt));
+                swdschemas.push(swdchema);
+            } );
+
+            logger.info('SwdSchemas: ' + JSON.stringify(swdschemas));
+
+            res.send(swdschemas);
+        });
+    }
+    catch (ex) {
+        logger.warn(ex.message);
+        res.send(ex.message);
+    }
+
+});
+
+// Generate API doc
 app.post('/generate', upload.single('filename'), function (req, res) {
     try {
 
@@ -109,28 +142,20 @@ app.post('/generate', upload.single('filename'), function (req, res) {
                     if(err) {
                         logger.error('Failed to generate api document because: ' + err.stack);
                         res.send(err);
-                        return;
                     }
 
-                    listFiles(module, true, function (err, files) {
-                        if(err) {
-                            logger.warn(err.stack);
-                            return;
-                        }
-                        logger.info('Schemas: ' + files);
-                    });
                 });
             });
 
         });
 
-
+        res.send('OK');
     }
     catch (ex) {
         logger.warn(ex.message);
         res.send(ex.message);
     }
-    res.send('OK');
+
 });
 
 app.get('/serve', function (req, res) {
@@ -222,7 +247,7 @@ function generateApiDoc(module, name, version, schemaFile, callback) {
         let docFile = moduleFolder + path.sep + nameWithVeriosn(name, version) + docExt;
         backupFile(docFile);
 
-        let generateCommand = 'api2html -o ' + docFile + ' ' + schemaFile;
+        let generateCommand = 'api2html -o ' + docFile + ' -c ' + logo + ' ' + schemaFile;
         exec(generateCommand, (error, stdout, stderr) => {
             if (error) {
                 callback(error);
@@ -273,6 +298,18 @@ function listFiles(module, isSchema, callback) {
 
 function nameWithVeriosn(name, version) {
     return name + '_' + version.replace('.', '-');
+}
+
+function schemaFromFileName(fileName) {
+
+    let split = fileName.split('_');
+    let schema = {};
+    if(split.length > 1) {
+        schema.name = split[0];
+        schema.version = split[1].replace('-', '.');
+    }
+    logger.debug('File ' + fileName + ' Schema: ' + JSON.stringify(schema));
+    return schema;
 }
 
 module.exports = {
