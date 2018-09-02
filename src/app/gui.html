@@ -799,29 +799,45 @@
             <div class='tab-content'>
                 <div class="tab-pane hidden container is-fluid" id="wizards">
                     <h1 class="title">Wizards (Work-In-Progress)</h1>
-                    <h2 class="subtitle">These functions may be experimental, or have only a rudimentary UI</h2>
+                    <h2 class="subtitle">工作台</h2>
                     <ul>
-                        Module:
-                        <select id="module" v-model="this.$root.settings.module">
-                            <option value="global">Global</option>
-                            <option value="framework">Framework</option>
-                            <option value="core">Core</option>
-                            <option value="vrms">VRMS</option>
-                            <option value="crs">CRS</option>
-                            <option value="inventory">Inventory</option>
+                        模块:
+                        <select id="swdschema_module" v-model="this.$root.swdschema.module">
+                            <option v-for="swdmodule in this.$root.swdmodules"
+                                    :value="swdmodule">
+                                {{swdmodule}}
+                            </option>
                         </select>
                     </ul>
                     <ul>
-                        Schema:
-                        <select id="swdSchemas" v-model="this.$root.swdschemas">
-                            <option v-for="swdschema in swdschemas" :value="swdschema.name">{{swdschema.name}}</option>
-                        </select>
-                    </ul>
-                    <ul>
-                        <form name="formGenerate">
-                            Name: <input type="text" id="name" required="required" v-model="this.$root.settings.name">
-                            <a v-on:click="generate()">Generate</a>
+                        当前接口规范
+                        <form>
+                            <input type="text" id="swdschema_name" required="required"
+                                   v-model="this.$root.swdschema.name"/>
+                            <a v-on:click="generate()">发布此规范并生成文档</a>
                         </form>
+                    </ul>
+                    <ul>
+                        <a v-on:click="load_swdschemas()">刷新</a>
+                        已有接口规范:
+                        <select id="swdSchemas" v-model="this.$root.swdschema.name">
+                            <option v-for="swdschema in this.$root.swdschemas"
+                                    :value="swdschema.name">
+                                {{swdschema.name}}
+                            </option>
+                        </select>
+                        <a v-on:click="view_swdschema()">查看</a>
+                    </ul>
+                    <ul>
+                        <a v-on:click="load_swdapidocs()">刷新</a>
+                        已有接口文档:
+                        <select id="swdApiDocs" v-model="this.$root.swdschema.name">
+                            <option v-for="swdapidoc in this.$root.swdapidocs"
+                                    :value="swdapidoc.name">
+                                {{swdapidoc.name}}
+                            </option>
+                        </select>
+                        <a v-on:click="view_swdsapidoc()">查看</a>
                     </ul>
                 </div>
             </div>

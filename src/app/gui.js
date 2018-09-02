@@ -327,13 +327,49 @@ Vue.component('gui-main', {
         },
 
         save: function () {
+            this.save_swdschema();
             this.$root.save();
         },
 
         generate: function () {
-            let module = document.getElementById("module").value;
-            let name = document.getElementById("name").value;
-            this.$root.generate(module, name);
+            this.save_swdschema();
+            this.$root.generate(this.get_swdschema());
+        },
+
+        load_swdapidocs: function () {
+            this.save_swdschema();
+            this.$root.load_swdapidocs(this.get_swdschema().module);
+        },
+
+        load_swdschemas: function () {
+            this.save_swdschema();
+            this.$root.load_swdschemas(this.get_swdschema().module);
+        },
+
+        view_swdschema: function () {
+            this.save_swdschema();
+            this.$root.view_swdschema(this.get_swdschema());
+        },
+
+        view_swdsapidoc: function () {
+            this.save_swdschema();
+            this.$root.view_swdsapidoc(this.get_swdschema());
+        },
+
+        save_swdschema: function () {
+            let swdschema = this.get_swdschema();
+            this.$root.swdschema = swdschema;
+            if (window.localStorage) {
+                window.localStorage.setItem('swdschema', JSON.stringify(swdschema));
+            }
+        },
+
+        get_swdschema: function () {
+            let swdschema = {};
+            swdschema.module = document.getElementById("swdschema_module").value;
+            let name = document.getElementById("swdschema_name").value;
+            swdschema.name = (name.length < 1 ? 'default' : name);
+            return swdschema;
         },
 
         undo: function () {

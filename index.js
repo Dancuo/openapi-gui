@@ -1,5 +1,7 @@
 'use strict';
 
+const pathToSwaggerUi = 'swagger-ui-dist';
+const swaggerFile = 'swagger.yaml';
 const {exec} = require('child_process');
 const fs = require('fs');
 const util = require('util');
@@ -24,13 +26,10 @@ const ourVersion = require('./package.json').version;
 const petstore = require('./data/static.js').petstore;
 const schemaFolder = 'schema';
 const docFolder = 'api_docs';
-const defModule = 'global';
-const defVersion = '1.0';
-const schemaExt = '.yml';
+const schemaExt = '.yaml';
 const docExt = '.html';
 const logo = 'source/images/logo.png';
 
-let defName = 'default.json';
 let definition = petstore;
 let writeBack = false;
 
@@ -81,7 +80,8 @@ app.post('/swdschemas', upload.single('filename'), function (req, res) {
             var swdschemas = [];
 
             files.forEach((file) => {
-                let swdchema = schemaFromFileName(path.basename(file, schemaExt));
+                let swdchema = {};
+                swdchema.name = path.basename(file, schemaExt);
                 swdschemas.push(swdchema);
             } );
 
@@ -97,25 +97,103 @@ app.post('/swdschemas', upload.single('filename'), function (req, res) {
 
 });
 
+// List api docs for spec module
+app.post('/swdapidocs', upload.single('filename'), function (req, res) {
+    try {
+
+        logger.debug("swdapidocs req.body", JSON.stringify(req.body));
+
+        let module = req.body.module;
+        listFiles(module, false, function (err, files) {
+            if(err) {
+                logger.warn(err.stack);
+                return;
+            }
+
+            var apidocs = [];
+
+            files.forEach((file) => {
+                let apidoc = {};
+                apidoc.name = path.basename(file, docExt);
+                apidocs.push(apidoc);
+            } );
+
+            logger.info('SwdApiDocs: ' + JSON.stringify(apidocs));
+
+            res.send(apidocs);
+        });
+    }
+    catch (ex) {
+        logger.warn(ex.message);
+        res.send(ex.message);
+    }
+
+});
+
+// View schema
+app.post('/swdschema', upload.single('filename'), function (req, res) {
+    try {
+
+        let swdschema = JSON.parse(req.body.swdschema);
+        logger.debug("swdschema request: ", JSON.stringify(swdschema));
+
+        let schemaFile = genSwdFilePath(swdschema, true);
+        logger.info("view schema file path: " + schemaFile);
+
+        fs.copyFileSync(schemaFile, schemaFolder + path.sep + swaggerFile);
+
+        res.send(pathToSwaggerUi);
+
+    }
+    catch (ex) {
+        logger.warn(ex.message);
+        res.send(ex.message);
+    }
+
+});
+
+// View doc
+app.post('/swdapidoc', upload.single('filename'), function (req, res) {
+    try {
+
+        let swdschema = JSON.parse(req.body.swdschema);
+        logger.debug("swdapidoc request: ", JSON.stringify(swdschema));
+
+        let docFile = genSwdFilePath(swdschema, false);
+        logger.info("view apidoc file path: " + docFile);
+
+        res.send(docFile);
+
+    }
+    catch (ex) {
+        logger.warn(ex.message);
+        res.send(ex.message);
+    }
+
+});
+
+function genModuleFolder(swdschema, isSchema) {
+    let moduleFolder = (isSchema ? schemaFolder : docFolder) + path.sep + swdschema.module;
+    logger.debug('genModuleFolder: ' + moduleFolder);
+    return moduleFolder;
+}
+
+function genSwdFilePath(swdschema, isSchema) {
+    let swdFilePath = genModuleFolder(swdschema, isSchema) + path.sep + swdschema.name + (isSchema ? schemaExt : docExt);
+    logger.debug('genSwdFilePath: ' + swdFilePath);
+    return swdFilePath;
+}
+
 // Generate API doc
 app.post('/generate', upload.single('filename'), function (req, res) {
     try {
 
-        definition = JSON.parse(req.body.schema);
-        let module = req.body.module;
-        let name = req.body.name;
-        let version = req.body.version;
-        if (name == null) {
-            name = defName;
-        }
-        if (module == null) {
-            module = defModule;
-        }
-        if (version == null) {
-            version = defVersion;
-        }
+        logger.debug('generate swdschema: ' + JSON.stringify(req.body.swdschema));
 
-        let moduleFolder = schemaFolder + path.sep + module;
+        definition = JSON.parse(req.body.schema);
+        let swdschema = JSON.parse(req.body.swdschema);
+
+        let moduleFolder = genModuleFolder(swdschema, true);
         // Prepare module directory
         mkdirp(moduleFolder, function (err) {
             if (err) {
@@ -124,7 +202,7 @@ app.post('/generate', upload.single('filename'), function (req, res) {
                 return;
             }
 
-            let schemaFile = moduleFolder + path.sep + nameWithVeriosn(name, version) + schemaExt;
+            let schemaFile = genSwdFilePath(swdschema, true);
 
             // Write schema file
             let s = yaml.safeDump(definition, {lineWidth: -1});
@@ -138,7 +216,7 @@ app.post('/generate', upload.single('filename'), function (req, res) {
 
                 logger.info('Saved schema file: ', schemaFile);
 
-                generateApiDoc(module, name, version, schemaFile, function (err) {
+                generateApiDoc(swdschema, schemaFile, function (err) {
                     if(err) {
                         logger.error('Failed to generate api document because: ' + err.stack);
                         res.send(err);
@@ -220,7 +298,7 @@ function server(myport, argv) {
         if (argv.w || argv.write) writeBack = true;
         if (argv.l || argv.launch) {
             let path = '';
-            defName = (argv.d || argv.definition);
+            let defName = (argv.d || argv.definition);
             if (defName) {
                 path = '/?url=%2fserve';
                 console.log('Serving', defName);
@@ -232,9 +310,9 @@ function server(myport, argv) {
     });
 }
 
-function generateApiDoc(module, name, version, schemaFile, callback) {
+function generateApiDoc(swdschema, schemaFile, callback) {
 
-    let moduleFolder = docFolder + path.sep + module;
+    let moduleFolder = genModuleFolder(swdschema, false);
 
     // Prepare module directory
     mkdirp(moduleFolder, function (err) {
@@ -244,7 +322,7 @@ function generateApiDoc(module, name, version, schemaFile, callback) {
             return err;
         }
 
-        let docFile = moduleFolder + path.sep + nameWithVeriosn(name, version) + docExt;
+        let docFile = genSwdFilePath(swdschema, false);
         backupFile(docFile);
 
         let generateCommand = 'api2html -o ' + docFile + ' -c ' + logo + ' ' + schemaFile;
@@ -294,22 +372,6 @@ function listFiles(module, isSchema, callback) {
     glob(searchString, function (err, files) {
         callback(err, files);
     })
-}
-
-function nameWithVeriosn(name, version) {
-    return name + '_' + version.replace('.', '-');
-}
-
-function schemaFromFileName(fileName) {
-
-    let split = fileName.split('_');
-    let schema = {};
-    if(split.length > 1) {
-        schema.name = split[0];
-        schema.version = split[1].replace('-', '.');
-    }
-    logger.debug('File ' + fileName + ' Schema: ' + JSON.stringify(schema));
-    return schema;
 }
 
 module.exports = {

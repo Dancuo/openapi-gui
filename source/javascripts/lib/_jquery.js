@@ -8332,13 +8332,13 @@ jQuery.extend( {
     }
   },
 
-  // Creates a full fledged settings object into target
-  // with both ajaxSettings and settings fields.
+  // Creates a full fledged swdschema object into target
+  // with both ajaxSettings and swdschema fields.
   // If target is omitted, writes into ajaxSettings.
   ajaxSetup: function( target, settings ) {
     return settings ?
 
-      // Building a settings object
+      // Building a swdschema object
       ajaxExtend( ajaxExtend( target, jQuery.ajaxSettings ), settings ) :
 
       // Extending ajaxSettings
@@ -8489,7 +8489,7 @@ jQuery.extend( {
 
     // Remove hash character (#7531: and string promotion)
     // Add protocol if not provided (prefilters might expect it)
-    // Handle falsy url in the settings object (#10093: consistency with old signature)
+    // Handle falsy url in the swdschema object (#10093: consistency with old signature)
     // We also use the url parameter if available
     s.url = ( ( url || s.url || location.href ) + "" ).replace( rhash, "" )
       .replace( rprotocol, location.protocol + "//" );
@@ -9258,7 +9258,7 @@ jQuery.ajaxTransport( "script", function( s ) {
 var oldCallbacks = [],
   rjsonp = /(=)\?(?=&|$)|\?\?/;
 
-// Default jsonp settings
+// Default jsonp swdschema
 jQuery.ajaxSetup( {
   jsonp: "callback",
   jsonpCallback: function() {
