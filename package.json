@@ -1,6 +1,6 @@
 {
     "name": "swdapi",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "description": "Sweetome Restful API Management based on Swagger OpenAPI Specification",
     "main": "openapi-gui.js",
     "bin": {
